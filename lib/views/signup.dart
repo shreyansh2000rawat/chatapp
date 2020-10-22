@@ -1,8 +1,16 @@
+import 'package:chatapptutorial/helper/helperfunctions.dart';
 import 'package:chatapptutorial/services/auth.dart';
+import 'package:chatapptutorial/services/database.dart';
+import 'package:chatapptutorial/views/chatRoomsScreen.dart';
 import 'package:chatapptutorial/widgets/widget.dart';
 import 'package:flutter/material.dart';
 
 class SignUp extends StatefulWidget {
+
+  final Function toggle;
+
+  SignUp(this.toggle);
+
   @override
   _SignUpState createState() => _SignUpState();
 }
@@ -13,6 +21,8 @@ class _SignUpState extends State<SignUp> {
 
   AuthMethods authMethods = new AuthMethods();
 
+  DatabaseMethods databaseMethods = new DatabaseMethods();
+
   final formKey = GlobalKey<FormState>();
 
   TextEditingController userNameTextEditingController = new TextEditingController();
@@ -21,13 +31,28 @@ class _SignUpState extends State<SignUp> {
 
   signMeUp(){
     if(formKey.currentState.validate()){
+
+      Map<String, String> userInfoMap = {
+        "name": userNameTextEditingController.text,
+        "email": emailTextEditingController.text
+      };
+
+      HelperFunctions.saveUserEmailSharedPreference(emailTextEditingController.text);
+      HelperFunctions.saveUserNameSharedPreference(userNameTextEditingController.text);
+
       setState(() {
         isLoading = true;
       });
 
       authMethods.signUpWithEmailAndPassword(emailTextEditingController.text,
           passwordTextEditingController.text).then((val){
-            print("$val");
+            //print("${val.uid}");
+
+        databaseMethods.uploadUserInfo(userInfoMap);
+        HelperFunctions.saveUserLoggedInSharedPreference(true);
+            Navigator.pushReplacement(context, MaterialPageRoute(
+              builder: (context) => ChatRoom()
+            ));
       });
     }
   }
@@ -144,11 +169,19 @@ class _SignUpState extends State<SignUp> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text("Already have account ? ", style: mediumTextStyle(),),
-                    Text("Sign In now", style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17.0,
-                      decoration: TextDecoration.underline,
-                    ),),
+                    GestureDetector(
+                      onTap: (){
+                        widget.toggle();
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text("Sign In now", style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17.0,
+                          decoration: TextDecoration.underline,
+                        ),),
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(
